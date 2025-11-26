@@ -6,7 +6,7 @@ fn main() {
 }
 
 fn part1() {
-    let contents = fs::read_to_string("./input.txt").unwrap();
+    let contents = fs::read_to_string("./example.txt").unwrap();
     let mut lines_it = contents.lines();
 
     let first_line = lines_it.next().unwrap();
@@ -65,8 +65,20 @@ fn part1() {
                         })
                     }
                 });
-                let score = remaining_score * n;
+                let rem: i32 = board
+                    .iter()
+                    .enumerate()
+                    .map(|(i, row)| {
+                        row.iter()
+                            .enumerate()
+                            .filter(|&(j, _)| !marked[x][i][j])
+                            .map(|(_, elt)| elt)
+                            .sum::<i32>()
+                    })
+                    .sum();
+                let score = rem * n;
                 println!("{remaining_score}");
+                println!("{rem}");
                 println!("{n}");
                 println!("{score}");
                 return;
