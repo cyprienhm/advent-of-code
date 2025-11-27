@@ -5,9 +5,6 @@ example = Path(__file__).parent / "example.txt"
 true_input = Path(__file__).parent / "input.txt"
 to_read = example
 
-if not to_read.exists():
-    sys.exit()
-
 print(f"running with {to_read.name}")
 data = open(to_read).read().strip().split("\n")
 
