@@ -8,10 +8,12 @@ print(f"running with {to_read.name}")
 data = open(to_read).read().strip().split("\n")
 
 
-def part1(data: list[str]): ...
+def part1(data: list[str]):
+    pass
 
 
-def part2(data: list[str]): ...
+def part2(data: list[str]):
+    pass
 
 
 print(part1(data))
