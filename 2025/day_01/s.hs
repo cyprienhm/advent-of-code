@@ -1,10 +1,9 @@
 parseInstruction :: String -> Int
-parseInstruction s
+parseInstruction (dir : amountStr)
   | dir == 'L' = -amount
   | dir == 'R' = amount
   where
-    dir = head s
-    amount = read (tail s) :: Int
+    amount = read amountStr :: Int
 
 countZeros :: (Int, Int) -> Int -> (Int, Int)
 countZeros (pos, nZeros) move = (nextPos, nZeros + eqZero)
@@ -22,7 +21,7 @@ countInterZeros :: (Int, Int) -> Int -> (Int, Int)
 countInterZeros (pos, nZeros) move = (nextPos, nZeros + interZeros)
   where
     nextPos = (pos + move) `mod` 100
-    interZeros = foldl (\tot mov -> tot + case mov of 0 -> 1; _ -> 0) 0 (map (`mod` 100) (tail [pos, pos + (move `div` abs move) .. pos + move]))
+    interZeros = length (filter (== 0) (map (`mod` 100) (tail [pos, pos + (move `div` abs move) .. pos + move])))
 
 part2 :: [Int] -> Int
 part2 moves = count
