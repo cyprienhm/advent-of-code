@@ -1,3 +1,4 @@
+from itertools import product
 from pathlib import Path
 
 from utils import pad
@@ -13,34 +14,18 @@ data = pad(data, 1, ".")
 
 
 def get_rolls_pos(data: list[list[str]]):
-    dirs = [
-        (-1, 0),
-        (1, 0),
-        (0, -1),
-        (0, 1),
-        (-1, -1),
-        (1, 1),
-        (1, -1),
-        (-1, 1),
-    ]
+    dirs = set(product([-1, 0, 1], [-1, 0, 1])) - {(0, 0)}
     res = []
     for row, row_line in enumerate(data):
         for col, elt in enumerate(row_line):
-            if elt == "@":
-                around = 0
-                for d in dirs:
-                    up = d[0]
-                    right = d[1]
-                    if (
-                        row + up >= 0
-                        and row + up < len(data)
-                        and col + right < len(data[0])
-                        and col + right >= 0
-                    ):
-                        if data[row + up][col + right] == "@":
-                            around += 1
-                if around < 4:
-                    res.append((row, col))
+            if elt != "@":
+                continue
+
+            if (
+                sum(data[row + up][col + right] == "@" for up, right in dirs)
+                < 4
+            ):
+                res.append((row, col))
     return res
 
 
