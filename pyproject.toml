@@ -13,3 +13,6 @@ dependencies = [
 [tool.ruff]
 line-length = 80
 select = ["E", "F", "W", "Q", "I"]
+
+[tool.setuptools]
+packages = ["utils"]
