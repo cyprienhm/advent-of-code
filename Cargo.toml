@@ -9,3 +9,6 @@ edition = "2024"
 name = "2021_day_04"
 path = "2021/day_04/s.rs"
 
+[[bin]]
+name = "2025_day_01"
+path = "2025/day_01/s.rs"
