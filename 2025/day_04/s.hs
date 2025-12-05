@@ -1,18 +1,21 @@
+import Data.Set (Set)
+import qualified Data.Set as Set
+
 aroundDirs = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 
-accessible :: (Int, Int) -> [(Int, Int)] -> Bool
+accessible :: (Int, Int) -> Set (Int, Int) -> Bool
 accessible (row, col) grid = length around < 4
   where
-    around = filter id [(row + up, col + right) `elem` grid | (up, right) <- aroundDirs]
+    around = filter id [(row + up, col + right) `Set.member` grid | (up, right) <- aroundDirs]
 
-removeRolls :: [(Int, Int)] -> (Int, [(Int, Int)])
+removeRolls :: Set (Int, Int) -> (Int, Set (Int, Int))
 removeRolls grid
   | null toRemove = (0, grid)
-  | otherwise = (length toRemove, filter (\x -> not $ x `elem` toRemove) grid)
+  | otherwise = (length toRemove, Set.filter (`Set.notMember` toRemove) grid)
   where
-    toRemove = filter (`accessible` grid) grid
+    toRemove = Set.filter (`accessible` grid) grid
 
-removeMaxRolls :: [(Int, Int)] -> Int
+removeMaxRolls :: Set (Int, Int) -> Int
 removeMaxRolls grid
   | removed == 0 = 0
   | otherwise = removed + removeMaxRolls newGrid
@@ -21,11 +24,11 @@ removeMaxRolls grid
 
 main :: IO ()
 main = do
-  input <- lines <$> readFile "input.txt"
+  grid <- lines <$> readFile "input.txt"
 
-  let positions = [(row, col) | row <- [0 .. length input - 1], col <- [0 .. length (head input) - 1]]
-  let rolls = filter (\(row, col) -> (input !! row !! col) == '@') positions
-  let accessibleRolls = filter (`accessible` rolls) rolls
+  let positions = [(row, col) | row <- [0 .. length grid - 1], col <- [0 .. length (head grid) - 1]]
+  let rolls = Set.fromList (filter (\(row, col) -> (grid !! row !! col) == '@') positions)
+  let accessibleRolls = Set.filter (`accessible` rolls) rolls
 
   print $ length accessibleRolls
   print $ removeMaxRolls rolls
