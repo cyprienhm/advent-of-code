@@ -23,18 +23,16 @@ fn part1(parsed: Vec<i32>) -> i32 {
     count
 }
 
-fn count_and_move((position, count): (i32, i32), amount: i32) -> (i32, i32) {
-    let mut new_position = position;
-    let mut new_count = count;
+fn count_and_move((mut position, mut count): (i32, i32), amount: i32) -> (i32, i32) {
     for _ in 0..amount.abs() {
-        new_position += amount.signum();
-        new_position = new_position.rem_euclid(100);
+        position += amount.signum();
+        position = position.rem_euclid(100);
 
-        if new_position == 0 {
-            new_count += 1;
+        if position == 0 {
+            count += 1;
         }
     }
-    (new_position, new_count)
+    (position, count)
 }
 fn part2(parsed: Vec<i32>) -> i32 {
     let (_, answer) = parsed.into_iter().fold((50, 0), count_and_move);
