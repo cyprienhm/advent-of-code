@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import numpy as np
+from tqdm import tqdm
+from z3 import IntVector, Optimize, Sum
+
 example = Path(__file__).parent / "example.txt"
 true_input = Path(__file__).parent / "input.txt"
 to_read = true_input
@@ -38,6 +42,13 @@ def press_button(state, button):
             new_state[elt] = "#"
         else:
             new_state[elt] = "."
+    return new_state
+
+
+def press_button_joltage(state, button):
+    new_state = state[:]
+    for elt in button:
+        new_state[elt] += 1
     return new_state
 
 
@@ -84,8 +95,42 @@ def part1(data: list[str]):
 
 
 def part2(data: list[str]):
-    pass
+    machines = parse(data)
+
+    min_steps = []
+    for machine in tqdm(machines):
+        goal = machine[2]
+        buttons = machine[1]
+        shape = len(goal)
+        goal_vect = np.zeros(shape, dtype=int)
+        for i, goal_elt in enumerate(goal):
+            goal_vect[i] = goal_elt
+
+        buttons_vects = []
+        for button in buttons:
+            single_vect = np.zeros(shape)
+            for button_elt in button:
+                single_vect[button_elt] = 1
+            buttons_vects.append(single_vect)
+
+        buttons_vects = np.array(buttons_vects).T.astype(int)
+
+        s = Optimize()
+        x = IntVector("x", len(buttons))
+        c = [
+            Sum([x[j] * buttons_vects[i][j] for j in range(len(buttons))])
+            == goal[i]
+            for i in range(len(goal))
+        ]
+        c.extend([x[j] >= 0 for j in range(len(buttons))])
+        s.add(c)
+        s.check()
+        model = s.model()
+        print(model)
+        min_steps.append(sum([model[c].as_long() for c in x]))
+    return sum(min_steps)
 
 
 print(part1(data))
 print(part2(data))
+# 15801 too high

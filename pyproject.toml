@@ -8,6 +8,7 @@ dependencies = [
     "ipython>=9.6.0",
     "numpy>=2.3.4",
     "ruff>=0.14.6",
+    "z3-solver>=4.15.4.0",
 ]
 
 [tool.ruff]
