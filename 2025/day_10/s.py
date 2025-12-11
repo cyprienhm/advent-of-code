@@ -124,9 +124,9 @@ def part2(data: list[str]):
         ]
         c.extend([x[j] >= 0 for j in range(len(buttons))])
         s.add(c)
+        s.minimize(Sum([c for c in x]))
         s.check()
         model = s.model()
-        print(model)
         min_steps.append(sum([model[c].as_long() for c in x]))
     return sum(min_steps)
 
