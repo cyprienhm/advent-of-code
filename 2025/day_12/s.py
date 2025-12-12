@@ -4,7 +4,7 @@ import numpy as np
 
 example = Path(__file__).parent / "example.txt"
 true_input = Path(__file__).parent / "input.txt"
-to_read = example
+to_read = true_input
 
 print(f"running with {to_read.name}")
 data = open(to_read).read().strip().split("\n")
@@ -43,55 +43,44 @@ def parse(data):
         if ":" in line:
             if "x" in line:
                 # final instr
-                region_shape, indices = line.split(": ")
+                region_shape, required = line.split(": ")
+                required = [int(c) for c in required.split(" ")]
                 regions.append(
                     (
-                        [int(c) for c in region_shape.split("x")],
-                        [int(c) for c in indices.split(" ")],
+                        tuple([int(c) for c in region_shape.split("x")]),
+                        [
+                            (req_index, req_amount)
+                            for req_index, req_amount in enumerate(required)
+                            if req_amount > 0
+                        ],
                     )
                 )
             else:
                 currently_filled = int(line[:-1])
                 shapes[currently_filled] = []
         else:
-            shapes[currently_filled].append([c for c in line])
+            shapes[currently_filled].append(
+                [1 if c == "#" else 0 for c in line]
+            )
     for k in shapes:
-        shapes[k] = np.array(shapes[k])
+        shapes[k] = np.array(shapes[k], dtype=int)
     return shapes, regions
 
 
 def add_shape_to_grid(grid, shape, row, col):
-    new_grid = grid.copy()
     shape_rows, shape_cols = shape.shape
-    grid_rows, grid_cols = new_grid.shape
-    if row + shape_rows > grid_rows:
+    new_grid = grid.copy()
+    grid_shape_view = new_grid[
+        row : row + shape_rows, col : col + shape_cols
+    ].view()
+    grid_shape_view += shape
+    if np.any(grid_shape_view > 1):
         return None
-    if col + shape_cols > grid_cols:
-        return None
-    # if (
-    #     new_grid[row : row + shape_rows, col : col + shape_cols].shape
-    #     != shape.shape
-    # ):
-    #     return None
-
-    # shape_mask = shape == "#"
-    # grid_shape_view = new_grid[row : row + shape_rows, col : col + shape_cols]
-    #
-    # if not np.all(grid_shape_view[shape_mask] == "."):
-    #     return None
-    for i, row_i in enumerate(range(row, row + shape_rows)):
-        for j, col_j in enumerate(range(col, col + shape_cols)):
-            if shape[i][j] == "#":
-                if new_grid[row_i, col_j] == "#":
-                    return None
-                new_grid[row_i, col_j] = "#"
     return new_grid
 
 
 def can_fit(region_shape, required, shapes):
-    grid = np.array(
-        [["." for _ in range(region_shape[0])] for _ in range(region_shape[1])]
-    )
+    grid = np.zeros((region_shape[1], region_shape[0]), dtype=int)
     search = [(grid, required)]
     already_seen = set()
     tot_expl = 0
@@ -100,42 +89,83 @@ def can_fit(region_shape, required, shapes):
         current_grid, current_req = search.pop()
         tot_expl += 1
 
-        for shape_index, shape_amount in enumerate(current_req):
-            if shape_amount > 0:
-                shape_to_add_index = shape_index
-                break
-
+        shape_index, shape_amount = current_req[0]
         # try to insert shape and search it
-        shape_to_add = shapes[shape_to_add_index]
+        shape_to_add = shapes[shape_index]
+        new_shape_amount = shape_amount - 1
+        adding_last = False
+        if new_shape_amount == 0:
+            if len(current_req) == 1:
+                adding_last = True
+            else:
+                new_req = current_req[1:]
+        else:
+            new_req = current_req[:]
+            new_req[0] = (shape_index, new_shape_amount)
         for diff in get_flips_and_rots(shape_to_add):
-            for row in range(0, region_shape[1] - diff.shape[0] + 1):
-                for col in range(0, region_shape[0] - diff.shape[1] + 1):
+            for row in range(0, grid.shape[0] - diff.shape[0] + 1):
+                for col in range(0, grid.shape[1] - diff.shape[1] + 1):
                     # print("try to fit")
                     # print(diff)
                     # print("inside")
                     # print(current_grid)
                     # print("at pos")
                     # print(row, col)
-                    res = add_shape_to_grid(
+                    new_grid = add_shape_to_grid(
                         current_grid,
                         diff,
                         row,
                         col,
                     )
 
-                    if res is not None:
-                        new_req = current_req[:]
-                        new_req[shape_index] -= 1
-                        if all(c == 0 for c in new_req):
-                            print(res)
+                    if new_grid is not None:
+                        if adding_last:
+                            print(new_grid)
                             return True
-                        key = "".join(
-                            ["".join([c for c in row]) for row in res]
-                        )
+                        key = new_grid.tobytes()
                         if key in already_seen:
                             continue
                         already_seen.add(key)
-                        search.append((res, new_req))
+                        search.append((new_grid, new_req))
+    return False
+
+
+def can_fit_recursive(grid, required):
+    shape_index, shape_amount = required[0]
+    # try to insert shape and search it
+    shape_to_add = shapes[shape_index]
+    for diff in get_flips_and_rots(shape_to_add):
+        for row in range(0, grid.shape[0] - diff.shape[0] + 1):
+            for col in range(0, grid.shape[1] - diff.shape[1] + 1):
+                # print("try to fit")
+                # print(diff)
+                # print("inside")
+                # print(current_grid)
+                # print("at pos")
+                # print(row, col)
+                new_grid = add_shape_to_grid(
+                    current_grid,
+                    diff,
+                    row,
+                    col,
+                )
+
+                if new_grid is not None:
+                    key = new_grid.tobytes()
+                    if key in already_seen:
+                        continue
+                    new_shape_amount = shape_amount - 1
+                    if new_shape_amount == 0:
+                        if len(current_req) == 1:
+                            print(new_grid)
+                            return True
+                        else:
+                            new_req = current_req[1:]
+                    else:
+                        new_req = current_req[:]
+                        new_req[0] = (shape_index, new_shape_amount)
+                    already_seen.add(key)
+                    search.append((new_grid, new_req))
     return False
 
 
@@ -143,10 +173,20 @@ def part1(data: list[str]):
     shapes, regions = parse(data)
     count = 0
     for region in regions:
-        shape = region[0]
+        region_shape = region[0]
         required = region[1]
-        if can_fit(shape, required, shapes):
+        tot = 0
+        for i, req in required:
+            tot += req * np.sum(shapes[i])
+        print(tot, region_shape[0] * region_shape[1])
+        if tot > region_shape[0] * region_shape[1]:
+            continue
+        else:
             count += 1
+
+        # if can_fit(region_shape, required, shapes):
+        #     count += 1
+    print(len(regions))
     return count
 
 
