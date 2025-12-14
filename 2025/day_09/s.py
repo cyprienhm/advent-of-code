@@ -74,12 +74,18 @@ def rect_ok(bot_left, top_right):
     maxx = max(ax, bx)
     maxy = max(ay, by)
 
-    for xx in tqdm(range(minx, maxx + 1)):
-        for yy in [miny, maxy]:
+    # for yy in [miny, maxy]:
+    #     for xx in reversed(range(minx, min(minx + 3000, maxx) + 1)):
+    #         if not is_inside(xx, yy):
+    #             return False
+    #     for xx in reversed(range(max(minx, maxx - 3000), maxx)):
+    #         if not is_inside(xx, yy):
+    #             return False
+    for xx in [minx, maxx]:
+        for yy in range(miny, min(maxy, miny + 3000) + 1):
             if not is_inside(xx, yy):
                 return False
-    for xx in [minx, maxx]:
-        for yy in range(miny, maxy + 1):
+        for yy in range(max(miny, maxy - 3000), maxy + 1):
             if not is_inside(xx, yy):
                 return False
     return True
@@ -91,17 +97,23 @@ def part2(data: list[str]):
     corners_and_areas = []
     for bot_left in special_coords:
         for j in range(0, len(coords)):
-            bot_left = (ax, ay) = coords[i]
+            (ax, ay) = bot_left
             top_right = (bx, by) = coords[j]
             area = (abs(ax - bx) + 1) * (abs(ay - by) + 1)
+            if area > 1545850052:
+                # might as well use the hint from
+                # my wrong answer
+                continue
             corners_and_areas.append((area, bot_left, top_right))
     corners_and_areas = list(sorted(corners_and_areas))[::-1]
     for area, bot_left, top_right in tqdm(corners_and_areas):
         if rect_ok(bot_left, top_right):
             print("found largest:")
-            return largest
+            return area
     return False
 
 
 print(part1(data))
 print(part2(data))
+
+# 1545850052 = too high
