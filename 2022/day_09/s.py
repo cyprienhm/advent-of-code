@@ -10,50 +10,6 @@ print(f"running with {to_read.name}")
 data = open(to_read).read().strip().split("\n")
 
 
-def part1(data: list[str]):
-    instructions = [(c[0], int(c[2:])) for c in data]
-    hx = 0
-    hy = 0
-    tx = 0
-    ty = 0
-
-    pos_visited = set()
-    for direction, amount in instructions:
-        if direction == "R":
-            for _ in range(amount):
-                hx += 1
-                if abs(hx - tx) > 1:
-                    tx += 1
-                    if ty != hy:
-                        ty = hy
-                pos_visited.add((tx, ty))
-        if direction == "L":
-            for _ in range(amount):
-                hx -= 1
-                if abs(hx - tx) > 1:
-                    tx -= 1
-                    if ty != hy:
-                        ty = hy
-                pos_visited.add((tx, ty))
-        if direction == "U":
-            for _ in range(amount):
-                hy += 1
-                if abs(hy - ty) > 1:
-                    ty += 1
-                    if tx != hx:
-                        tx = hx
-                pos_visited.add((tx, ty))
-        if direction == "D":
-            for _ in range(amount):
-                hy -= 1
-                if abs(hy - ty) > 1:
-                    ty -= 1
-                    if tx != hx:
-                        tx = hx
-                pos_visited.add((tx, ty))
-    return len(pos_visited)
-
-
 def join_back(cur: tuple[int, int], prev: tuple[int, int]) -> tuple[int, int]:
     curx, cury = cur
     prevx, prevy = prev
@@ -66,44 +22,47 @@ def join_back(cur: tuple[int, int], prev: tuple[int, int]) -> tuple[int, int]:
     return (curx, cury)
 
 
+def part1(data: list[str]):
+    instructions: list[tuple[str, int]] = [(c[0], int(c[2:])) for c in data]
+    snake: list[tuple[int, int]] = [(0, 0) for _ in range(2)]
+
+    pos_visited: set[tuple[int, int]] = set()
+
+    head_updates = {
+        "R": lambda head: (head[0] + 1, head[1]),
+        "L": lambda head: (head[0] - 1, head[1]),
+        "U": lambda head: (head[0], head[1] + 1),
+        "D": lambda head: (head[0], head[1] - 1),
+    }
+    for direction, amount in instructions:
+        for _ in range(amount):
+            snake[0] = head_updates[direction](snake[0])
+
+            for i in range(1, len(snake)):
+                snake[i] = join_back(snake[i], snake[i - 1])
+            pos_visited.add(snake[-1])
+    return len(pos_visited)
+
+
 def part2(data: list[str]):
     instructions: list[tuple[str, int]] = [(c[0], int(c[2:])) for c in data]
     snake: list[tuple[int, int]] = [(0, 0) for _ in range(10)]
 
     pos_visited: set[tuple[int, int]] = set()
+
+    head_updates = {
+        "R": lambda head: (head[0] + 1, head[1]),
+        "L": lambda head: (head[0] - 1, head[1]),
+        "U": lambda head: (head[0], head[1] + 1),
+        "D": lambda head: (head[0], head[1] - 1),
+    }
     for direction, amount in instructions:
-        if direction == "R":
-            for _ in range(amount):
-                head_x, head_y = snake[0]
-                snake[0] = (head_x + 1, head_y)
+        for _ in range(amount):
+            snake[0] = head_updates[direction](snake[0])
 
-                for i in range(1, len(snake)):
-                    snake[i] = join_back(snake[i], snake[i - 1])
-                pos_visited.add(snake[-1])
-        if direction == "L":
-            for _ in range(amount):
-                head_x, head_y = snake[0]
-                snake[0] = (head_x - 1, head_y)
-
-                for i in range(1, len(snake)):
-                    snake[i] = join_back(snake[i], snake[i - 1])
-                pos_visited.add(snake[-1])
-        if direction == "U":
-            for _ in range(amount):
-                head_x, head_y = snake[0]
-                snake[0] = (head_x, head_y + 1)
-
-                for i in range(1, len(snake)):
-                    snake[i] = join_back(snake[i], snake[i - 1])
-                pos_visited.add(snake[-1])
-        if direction == "D":
-            for _ in range(amount):
-                head_x, head_y = snake[0]
-                snake[0] = (head_x, head_y - 1)
-
-                for i in range(1, len(snake)):
-                    snake[i] = join_back(snake[i], snake[i - 1])
-                pos_visited.add(snake[-1])
+            for i in range(1, len(snake)):
+                snake[i] = join_back(snake[i], snake[i - 1])
+            pos_visited.add(snake[-1])
     return len(pos_visited)
 
 
