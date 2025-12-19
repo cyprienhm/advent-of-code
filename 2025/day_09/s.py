@@ -2,8 +2,6 @@ import re
 from functools import cache
 from pathlib import Path
 
-import numpy as np
-from scipy import sparse
 from tqdm import tqdm
 
 example = Path(__file__).parent / "example.txt"
@@ -54,8 +52,8 @@ def is_inside(xx, yy):
     state = False
     count = 0
     for elt in xray:
-        if elt == True:
-            if state == True:
+        if elt:
+            if state:
                 continue
             else:
                 state = True
@@ -92,7 +90,6 @@ def rect_ok(bot_left, top_right):
 
 
 def part2(data: list[str]):
-    largest = 0
     special_coords = [(94918, 50338), (94918, 48430)]
     corners_and_areas = []
     for bot_left in special_coords:
